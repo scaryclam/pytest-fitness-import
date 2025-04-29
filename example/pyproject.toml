@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+fitness_warnings = [
+    # Format: (target_package, restriction_type (all|only), exceptions)
+    {"target_package"="modules.payment", "type"="all", "exceptions"=[]}
+]
