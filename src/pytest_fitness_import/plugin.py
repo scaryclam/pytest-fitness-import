@@ -33,7 +33,11 @@ class Fitness:
         self.allowed_warnings = self.config.warning_configs
 
     def pytest_sessionfinish(self, session, exitstatus):
-        self._make_checks(session)
+        check_results = self._make_checks(session)
+        for file_name, report in check_results.items():
+            self.report.warnings[file_name] = report['details']
+            self.report.total_count += report['errors']
+
 
     def _make_checks(self, session):
         python_files = []  # This is a list of files to check
@@ -106,17 +110,20 @@ class Fitness:
             )
 
         for warning_name, warning_data in self.report.warnings.items():
-            message = (
-                f"{warning_name}: {BOLD}Had {warning_data['count']} occurrences{END}"
-            )
-            if warning_data.get("result") == "fail":
-                message += f"{RED}{BOLD}, was allowed {warning_data['config']['allowed_number']}{END}"
+            for warning_message in warning_data:
+                message = (
+                    f"{warning_name}: {BOLD}{warning_message}{END}"
+                )
+            #if warning_data.get("result") == "fail":
+            #    message += f"{RED}{BOLD}, was allowed {warning_data['config']['allowed_number']}{END}"
+            #    terminalreporter.line(message, red=True)
+            #if warning_data.get("result") == "report":
+            #    terminalreporter.line(message, blue=True)
+            #if warning_data.get("result") == "success":
+            #    message += f"{GREEN}{BOLD}, is allowed {warning_data['config']['allowed_number']}{END}"
+            #    terminalreporter.line(message, green=True)
                 terminalreporter.line(message, red=True)
-            if warning_data.get("result") == "report":
-                terminalreporter.line(message, blue=True)
-            if warning_data.get("result") == "success":
-                message += f"{GREEN}{BOLD}, is allowed {warning_data['config']['allowed_number']}{END}"
-                terminalreporter.line(message, green=True)
+
 
         terminalreporter.line(os.linesep.join(content))
 
