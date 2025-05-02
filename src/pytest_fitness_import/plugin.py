@@ -140,7 +140,7 @@ def pytest_configure(config):
             "restriction_type": restriction_type, 
             "exceptions": exceptions,
             "search_path": search_path,
-            "target_packages": [target_package],
+            "target_package": [target_package],
         }
 
     fitness_config = FitnessConfig(warning_configs=warning_dict)
