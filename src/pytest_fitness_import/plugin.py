@@ -33,43 +33,47 @@ class Fitness:
         self.allowed_warnings = self.config.warning_configs
 
     def pytest_sessionfinish(self, session, exitstatus):
-        for package, config in self.config.warning_configs.items():
-            self._make_checks(session, package, config)
+        self._make_checks(session)
 
-    def _make_checks(self, session, package, config):
-        path_components = ['.'] + package.split('.')
-        base_path = os.path.join(*path_components)
+    def _make_checks(self, session):
         python_files = []  # This is a list of files to check
+        search_base_path = '.'
+        check_results = {}
 
-        for found_file in Path('.').rglob("*.py"):
+        for found_file in Path(search_base_path).rglob("*.py"):
             if "migrations" not in str(found_file):
                 python_files.append(found_file)
 
-        check_results = {}
         for file_path in python_files:
             with open(file_path, encoding="utf-8") as current_fd:
                 tree = ast.parse(current_fd.read(), filename=str(file_path))
                 check_results[current_fd.name] = {
-                    'errors': 0
+                    'errors': 0,
                     'details': []
                 }
 
                 for node in ast.walk(tree):
                     if isinstance(node, ast.Import):
-                        for alias in node.names:
-                            for package_name in 
-                            if any(
-                                alias.name.startswith(pkg) for pkg in RESTRICTED_PACKAGES
-                            ):
-                                detail_message = f"FOUND IMPORT in {current_fd.name} LINE {node.lineno}"
+                        node_names = node.names
+                        import_type = "IMPORT"
+                    elif isinstance(node, ast.ImportFrom):
+                        node_names = [node.module]
+                        import_type = "IMPORT FROM"
+                    else:
+                        continue
+
+                    for node_name in node_names:
+                        # If the node name is an import, then check if it's a package that it's
+                        # not supposed to import
+                        for package, config in self.config.warning_configs.items():
+                            restricted_packages = [config.get("target_package")]
+                            import ipdb
+                            ipdb.set_trace()
+                            if any(node_name.name.startswith(package) for package in restricted_packages):
+                                detail_message = f"FOUND {import_type} in {current_fd.name} LINE {node.lineno}"
                                 print(detail_message)
                                 check_results[current_fd.name]['errors'] += 1
                                 check_results[current_fd.name]['details'].append(detail_message)
-                    elif isinstance(node, ast.ImportFrom):
-                        detail_message = f"FOUND IMPORT FROM in {current_fd.name} LINE {node.lineno}"
-                        print(detail_message)
-                        check_results[current_fd.name]['errors'] += 1
-                        check_results[current_fd.name]['details'].append(detail_message)
 
         return check_results
 
@@ -131,7 +135,13 @@ def pytest_configure(config):
         target_package = warning_config['target_package']
         restriction_type = warning_config.get('type', 'all')
         exceptions = warning_config.get('exceptions', [])
-        warning_dict[target_package] = {"restriction_type": restriction_type, "exceptions": exceptions}
+        search_path = warning_config.get('search_path', '.')
+        warning_dict[target_package] = {
+            "restriction_type": restriction_type, 
+            "exceptions": exceptions,
+            "search_path": search_path,
+            "target_packages": [target_package],
+        }
 
     fitness_config = FitnessConfig(warning_configs=warning_dict)
     config.pluginmanager.register(Fitness(fitness_config))
