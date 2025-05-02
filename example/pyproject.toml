@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
 fitness_warnings = [
     # Format: (target_package, restriction_type (all|only), exceptions)
-    {"search_path"=".", "target_package"="modules.payment", "type"="all", "exceptions"=[]}
+    {"search_path"=".", "target_package"="module_one", "type"="all", "exceptions"=[]}
 ]

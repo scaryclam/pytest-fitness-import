@@ -54,7 +54,7 @@ class Fitness:
 
                 for node in ast.walk(tree):
                     if isinstance(node, ast.Import):
-                        node_names = node.names
+                        node_names = [alias.name for alias in node.names]
                         import_type = "IMPORT"
                     elif isinstance(node, ast.ImportFrom):
                         node_names = [node.module]
@@ -67,13 +67,16 @@ class Fitness:
                         # not supposed to import
                         for package, config in self.config.warning_configs.items():
                             restricted_packages = [config.get("target_package")]
-                            import ipdb
-                            ipdb.set_trace()
-                            if any(node_name.name.startswith(package) for package in restricted_packages):
-                                detail_message = f"FOUND {import_type} in {current_fd.name} LINE {node.lineno}"
-                                print(detail_message)
-                                check_results[current_fd.name]['errors'] += 1
-                                check_results[current_fd.name]['details'].append(detail_message)
+                            #import ipdb
+                            #ipdb.set_trace()
+                            for package in restricted_packages:
+                                if current_fd.name.startswith(package):
+                                    continue
+                                elif node_name.startswith(package):
+                                    detail_message = f"FOUND {import_type} in {current_fd.name} LINE {node.lineno}"
+                                    print(detail_message)
+                                    check_results[current_fd.name]['errors'] += 1
+                                    check_results[current_fd.name]['details'].append(detail_message)
 
         return check_results
 
@@ -140,7 +143,7 @@ def pytest_configure(config):
             "restriction_type": restriction_type, 
             "exceptions": exceptions,
             "search_path": search_path,
-            "target_package": [target_package],
+            "target_package": target_package,
         }
 
     fitness_config = FitnessConfig(warning_configs=warning_dict)
