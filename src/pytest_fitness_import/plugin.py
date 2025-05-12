@@ -73,11 +73,13 @@ class Fitness:
                             restricted_packages = [config.get("target_package")]
                             #import ipdb
                             #ipdb.set_trace()
+                            
                             for package in restricted_packages:
-                                if current_fd.name.startswith(package):
+                                filename_as_path = '.'.join(file_path.parts).rstrip(".py")
+                                if filename_as_path.startswith(package):
                                     continue
                                 elif node_name.startswith(package):
-                                    detail_message = f"FOUND {import_type} in {current_fd.name} LINE {node.lineno}"
+                                    detail_message = f"FOUND restricted {import_type} from restricted package {package} in {current_fd.name} LINE {node.lineno}"
                                     print(detail_message)
                                     check_results[current_fd.name]['errors'] += 1
                                     check_results[current_fd.name]['details'].append(detail_message)
